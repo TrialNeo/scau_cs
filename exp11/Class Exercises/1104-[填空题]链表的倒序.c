@@ -60,21 +60,17 @@ void print(struct student *head) {
 struct student *reverse(struct student *head) {
     //用一个栈给他全部存起来然后，然后这个思路是不行的；你不知道整个链表的长度
     //那我往下看一个就改一次，不就行了吗，类似于二阶递推公式
-    if (head == NULL) {
-        return NULL;
+    if (!head || !head->next) {
+        return head;
     }
-    struct student *current = head,
-    *prev = NULL,
-    *next = NULL;
-    while (current->next != NULL) {
-        next = current->next;
-        current->next = prev;
-        prev = current;
-        current = next;
+    struct student *prev = NULL, *curr = head, *nxt = head->next;
+    while (curr) {
+        curr -> next = prev;
+        prev = curr;
+        curr = nxt;
+        nxt = curr->next;
     }
-
-    current->next = prev;
-    return current;
+    return curr;
 }
 
 int main() {
