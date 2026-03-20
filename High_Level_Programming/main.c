@@ -5,9 +5,15 @@
 
 #include "menu/menu.h"
 #include <stdbool.h>
+
+#include "admin/login.h"
+
 int main() {
 
+    if (login("hhhhhhhhh") == PASSWORD_UNSET) {
+        printf("你是第一次用吧，请先设置密码：");
 
+    }
 
     char op = 0;
     while (true) {

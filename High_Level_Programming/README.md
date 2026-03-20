@@ -53,15 +53,21 @@ item2,item2
 
 CLion
 
+cmake version 3.31.5
+
+gcc version 14.2.0 (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r3) 
+
+
+
 ## 构建
 
 ### dev
 
-其实cmake已经写好了，每次最多写一个
+其实CMakeLists已经写好了，每次最多写一个
 
 ```cmd
-cmake .
+cmake --build .
 ```
 
-然后又写了一个脚本可以用一下
+
 

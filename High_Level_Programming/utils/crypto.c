@@ -10,9 +10,9 @@
 #include <string.h>
 //加密函数，加密成功后在buffer,len进行修改；这里会申请一大片缓冲区，记得去释放
 //详细可以看Handbook of applied cryptography这本书的1.5的一个example，这里我们推广成16的倍数，具体就是对着这里实现的
-bool encrypt(char * key_buffer,unsigned key_len,char *paint_text_buffer,unsigned text_len,char **buffer,unsigned *len) {
+bool encrypt(const char key_buffer[16],const char *paint_text_buffer,const unsigned text_len,char **buffer,unsigned *len) {
     //排除空数据，空秘钥
-    if (key_buffer== NULL || paint_text_buffer == NULL || key_len == 0 || text_len == 0 || key_len !=16) {
+    if (key_buffer== NULL || paint_text_buffer == NULL || text_len == 0 ) {
         return false;
     }
     //先分块，并且计算填充
@@ -53,9 +53,9 @@ void print_buffer(char *buffer,unsigned len) {
     putchar('\n');
 }
 //解密，记得释放内存
-bool decrypt(char *key_buffer,unsigned key_len,char *paint_text_buffer,unsigned text_len,char **buffer,unsigned *len) {
+bool decrypt(const char key_buffer[16],char *paint_text_buffer,const unsigned text_len,char **buffer,unsigned *len) {
     //排除密文居然不是16的倍数，秘钥居然不是16位的，还有一些空的神奇事情
-    if (key_buffer== NULL || paint_text_buffer == NULL || key_len == 0 || text_len == 0|| text_len %16 || key_len !=16 ) {
+    if (key_buffer== NULL || paint_text_buffer == NULL || text_len == 0|| text_len %16  ) {
         return false;
     }
     //和上面的相同的
@@ -89,18 +89,18 @@ bool decrypt(char *key_buffer,unsigned key_len,char *paint_text_buffer,unsigned 
 
 
 
-
-int main(int argc, char *argv[]) {
-    char key[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
-    char text[] = {1,2,3,4,5,6};
-    // char enc_text = {0,0,0,0,0,0,13,2,3,0,1,6,7,4,5,26};
-    char *buffer  = 0,*buffer2 = 0;
-    unsigned len = 0,len2 = 0;
-    encrypt(key, 16, text,6, &buffer, &len);
-    print_buffer(buffer, len);
-    decrypt(key, 16, buffer,len, &buffer2, &len2);
-    print_buffer(buffer2, len2);
-    free(buffer);
-    free(buffer2);
-}
+//
+// int main(int argc, char *argv[]) {
+//     char key[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+//     char text[] = {1,2,3,4,5,6};
+//     // char enc_text = {0,0,0,0,0,0,13,2,3,0,1,6,7,4,5,26};
+//     char *buffer  = 0,*buffer2 = 0;
+//     unsigned len = 0,len2 = 0;
+//     encrypt(key, 16, text,6, &buffer, &len);
+//     print_buffer(buffer, len);
+//     decrypt(key, 16, buffer,len, &buffer2, &len2);
+//     print_buffer(buffer2, len2);
+//     free(buffer);
+//     free(buffer2);
+// }
 

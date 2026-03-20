@@ -3,5 +3,12 @@
 
 #ifndef PBM_ADMIN
 #define PBM_ADMIN
-
+enum LOGIN_STATUS {
+    SUCCESS,
+    PASSWORD_INCORRECT,
+    ERROR,
+    PASSWORD_UNSET
+};
+typedef enum LOGIN_STATUS LOGIN_STATUS;
+LOGIN_STATUS login(const char *password);
 #endif //PBM_ADMIN
