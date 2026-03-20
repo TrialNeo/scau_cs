@@ -24,11 +24,10 @@ bool encrypt(char * key_buffer,unsigned key_len,char *paint_text_buffer,unsigned
     int offset = 0;
     *buffer =  ( char*)malloc(block_size);
     memcpy(*buffer,paint_text_buffer,text_len);
-    //padding
+    //padding 这个用的是pkcs#7
     for (int i = 1;i<=block_leave;i++) {
         (*buffer)[block_size - i] = block_leave;
     }
-
     // for (int i = 0;i<block_size;i++) {
     //     printf("%2d ",(*buffer)[i]);
     // }
@@ -39,10 +38,51 @@ bool encrypt(char * key_buffer,unsigned key_len,char *paint_text_buffer,unsigned
     // putchar('\n');
     for (int i = 0; i < block_num; ++i) {
         for (int j = 0; j < 16; j++) {
-            (*buffer)[offset] ^= key_buffer[j];
+            (*buffer)[offset++] ^= key_buffer[j];
             // printf("%2d ",(*buffer)[offset]);
-            offset++;
         }
+    }
+    *len = block_size;
+    return true;
+}
+
+void print_buffer(char *buffer,unsigned len) {
+    for (int i = 0;i< len;i++) {
+        printf("%d ", buffer[i]);
+    }
+    putchar('\n');
+}
+//解密，记得释放内存
+bool decrypt(char *key_buffer,unsigned key_len,char *paint_text_buffer,unsigned text_len,char **buffer,unsigned *len) {
+    //排除密文居然不是16的倍数，秘钥居然不是16位的，还有一些空的神奇事情
+    if (key_buffer== NULL || paint_text_buffer == NULL || key_len == 0 || text_len == 0|| text_len %16 || key_len !=16 ) {
+        return false;
+    }
+    //和上面的相同的
+    unsigned block_num = text_len /16;
+    *buffer =  ( char*)malloc(text_len);
+    unsigned offset = 0;
+    memcpy(*buffer,paint_text_buffer,text_len);
+    print_buffer(*buffer,text_len);
+    for (int i = 0; i < block_num;++i) {
+        for (int j = 0; j < 16; ++j) {
+            (*buffer)[offset++] ^= key_buffer[j];
+        }
+    }
+
+    //倒找填充字节
+    unsigned padding = (*buffer)[offset-1];
+    bool is_padding = true;
+    for (int i = 1;i<=padding;i++) {
+        if ((*buffer)[offset -i] != padding) {
+            is_padding = false;
+            break;
+        }
+    }
+    if (is_padding) {
+        *len = text_len - padding;
+    }else {
+        *len = text_len;
     }
     return true;
 }
@@ -53,9 +93,14 @@ bool encrypt(char * key_buffer,unsigned key_len,char *paint_text_buffer,unsigned
 int main(int argc, char *argv[]) {
     char key[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
     char text[] = {1,2,3,4,5,6};
-    char enc_text = {0,0,0,0,0,0,13,2,3,0,1,6,7,4,5,26};
-    char *buffer  = 0;
-    unsigned len = 0;
+    // char enc_text = {0,0,0,0,0,0,13,2,3,0,1,6,7,4,5,26};
+    char *buffer  = 0,*buffer2 = 0;
+    unsigned len = 0,len2 = 0;
     encrypt(key, 16, text,6, &buffer, &len);
+    print_buffer(buffer, len);
+    decrypt(key, 16, buffer,len, &buffer2, &len2);
+    print_buffer(buffer2, len2);
     free(buffer);
+    free(buffer2);
 }
+
