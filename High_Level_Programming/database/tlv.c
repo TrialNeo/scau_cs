@@ -12,27 +12,38 @@ enum TLV_TYPE { TLV_TYPE_BYTES, TLV_TYPE_UINT32 };
 #include <stdio.h>
 
 // 将belong数据流序列化为tlv数据,记得释放buffer
-void tlv_encode_bytes(unsigned char **buffer, unsigned *buffer_len, unsigned char type, unsigned length,
-                      unsigned char *value) {
+void tlv_encode_bytes(unsigned char **buffer, unsigned *buffer_len, unsigned length, unsigned char *value) {
     if (0 < length && length <= 0b11111111) {
         *buffer_len = 2 + length;
         *buffer = malloc(*buffer_len);
         //(00010000)2  = (2^5)10
-        (*buffer)[0] = type | 0b00010000;
+        (*buffer)[0] = TLV_TYPE_BYTES | 0b00010000;
         (*buffer)[1] = (char) (length & 0b00001111);
         memmove(*buffer + 2, value, length);
     } else if (length <= 0b1111111111111111) { // 2^16，对于现在这个玩具程序来说应该不会比这个还多的了
         *buffer_len = 3 + length;
         *buffer = malloc(*buffer_len);
-        (*buffer)[0] = type | 0b00100000;
+        (*buffer)[0] = TLV_TYPE_BYTES | 0b00100000;
         (*buffer)[1] = (char) (length >> 8); // 0001 0001 0000 0000 => 0001 0001
         (*buffer)[2] = (char) length; //         0001 0001 0000 0000 => 0000 0000
         memmove(*buffer + 3, value, length);
     }
 }
 
-void tlv_encode_uint32(unsigned char **buffer, unsigned *buffer_len, unsigned char type, unsigned length,
-                       unsigned int value) {}
+void tlv_encode_uint(unsigned char **buffer, unsigned *buffer_len, unsigned long value) {
+    unsigned char val_buffer[16] = {0};
+    unsigned offset = 1;
+    do {
+        unsigned char bit = value;
+        val_buffer[16 - offset++] = bit;
+    } while ((value >>= 8) != 0);
+    // 我们把长度直接塞到高四位去。
+    *buffer = malloc(offset);
+    (*buffer)[0] = ((offset - 1) << 4) | TLV_TYPE_UINT32;
+    *buffer_len = offset;
+    offset--;
+    memmove((*buffer) + 1, val_buffer + 16 - offset, offset);
+}
 
 // 将数据流序列化为普通数据
 void tlv_decode_(void *buffer, const unsigned char *tlv_stream) {
@@ -54,9 +65,7 @@ void tlv_decode_(void *buffer, const unsigned char *tlv_stream) {
             }
             unsigned char *b = malloc(len);
             memmove(b, tlv_stream + 1 + bit_len, len);
-            for (int i = 0; i < len; i++) {
-                printf("%d ", b[i]);
-            }
+
             break;
         default:
             break;
@@ -64,23 +73,10 @@ void tlv_decode_(void *buffer, const unsigned char *tlv_stream) {
 }
 
 int main(int argc, char *argv[]) {
-    printf("%d", 0b10000000 >> 4);
-
-    unsigned char *
-            test = "在C语言中，printf() "
-                   "函数是我们常用的输出函数，但它并没有直接提供输出二进制数的格式说明符，不过，我们可以通过一些技巧来"
-                   "实现二进制的输出。本文将介绍 3 种方法C 的标准 printf 函数不直接支持 %b "
-                   "这样的二进制格式说明符，但是C 的标准 printf 函数不直接支持 %b "
-                   "这样的二进制格式说明符，但是有一些变通方法可以实现这个功能。通过循环和位操作打印整数的二进制格式。"
-                   "这种方法适用于所有平台，不依赖于任何非标准库。有一些变通方法可以实现这个功能。通过循环和位操作打印"
-                   "整数的二进制格式。这种方法适用于所有平台，不依赖于任何非标准库。来使用 printf() 函数输出二进制数。",
-           *buffer = 0;
-    unsigned buffer_len = 0;
-    tlv_encode_bytes(&buffer, &buffer_len, TLV_TYPE_BYTES, strlen(test), test);
-    printf("%llu\n", sizeof(buffer));
-    for (int i = 0; i < buffer_len; i++) {
+    unsigned char *buffer = 0;
+    unsigned len = 0;
+    tlv_encode_uint(&buffer, &len, 0b111111111); // 0b1 1111 1111
+    for (int i = 0; i < len; i++) {
         printf("%d ", buffer[i]);
     }
-    puts("");
-    tlv_decode_(NULL, buffer);
 }
