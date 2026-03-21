@@ -30,6 +30,8 @@ void tlv_encode_bytes(unsigned char **buffer, unsigned *buffer_len, unsigned len
     }
 }
 
+
+//记得释放buffer
 void tlv_encode_uint(unsigned char **buffer, unsigned *buffer_len, unsigned long value) {
     unsigned char val_buffer[16] = {0};
     unsigned offset = 1;
@@ -45,9 +47,8 @@ void tlv_encode_uint(unsigned char **buffer, unsigned *buffer_len, unsigned long
     memmove((*buffer) + 1, val_buffer + 16 - offset, offset);
 }
 
-// 将数据流序列化为普通数据
-void tlv_decode_(void *buffer, const unsigned char *tlv_stream) {
-    printf("%d\n", tlv_stream[0]);
+//解成bytes，记得释放buffer
+void tlv_decode_bytes(char **buffer, const unsigned char *tlv_stream) {
     char type = tlv_stream[0] & 0b00001111;
     switch (type) {
         case TLV_TYPE_BYTES:
@@ -63,20 +64,19 @@ void tlv_decode_(void *buffer, const unsigned char *tlv_stream) {
                 default:
                     break;
             }
-            unsigned char *b = malloc(len);
-            memmove(b, tlv_stream + 1 + bit_len, len);
-
+            *buffer = malloc(len);
+            memmove(*buffer, tlv_stream + 1 + bit_len, len);
             break;
         default:
             break;
     }
 }
 
-int main(int argc, char *argv[]) {
-    unsigned char *buffer = 0;
-    unsigned len = 0;
-    tlv_encode_uint(&buffer, &len, 0b111111111); // 0b1 1111 1111
-    for (int i = 0; i < len; i++) {
-        printf("%d ", buffer[i]);
-    }
-}
+// int main(int argc, char *argv[]) {
+//     unsigned char *buffer = 0;
+//     unsigned len = 0;
+//     tlv_encode_uint(&buffer, &len, 0b111111111); // 0b1 1111 1111
+//     for (int i = 0; i < len; i++) {
+//         printf("%d ", buffer[i]);
+//     }
+// }

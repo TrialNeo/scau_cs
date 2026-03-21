@@ -3,6 +3,7 @@
 
 #ifndef PBM_BELONG_H
 #define PBM_BELONG_H
+#include <stdbool.h>
 struct belong {
     unsigned id;
     char name[255];
@@ -21,4 +22,5 @@ void belong_init();
 void belong_unin();
 void belong_print();
 bool belong_add(const belong data);
+void belong_save();
 #endif // PBM_BELONG_H

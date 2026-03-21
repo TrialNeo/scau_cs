@@ -96,6 +96,7 @@ void interact() {
             case 5:
                 break;
             case 0:
+                belong_save();
                 return;
             default:
                 break;

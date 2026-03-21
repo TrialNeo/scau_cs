@@ -1,11 +1,13 @@
 // Created by Github@TrialNeo(shenpanpro@gmail.com)
 // Created Time 2026/3/21 13:04.
 
+#include "belong.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "belong.h"
 #include <string.h>
+
+#include "tlv.h"
 
 
 link belongs;
@@ -32,7 +34,7 @@ link link_init(unsigned num) {
 
 // 直接释放所有链表，头结点也不例外
 void link_free(link L) {
-    if (L== NULL) {
+    if (L == NULL) {
         return;
     }
     link p = L->next, q = NULL;
@@ -59,8 +61,9 @@ bool link_insert_with_sort(link L, const belong data) {
     }
     node->next = p->next;
     node->data = malloc(sizeof(belong));
-    strcpy(node->data->name,data.name);
-    strcpy(node->data->desc,data.desc);
+    node->data->id = size++;
+    strcpy(node->data->name, data.name);
+    strcpy(node->data->desc, data.desc);
     node->data->create_stamp = data.create_stamp;
     p->next = node;
     return true;
@@ -88,23 +91,17 @@ bool link_del(link L, int index) {
     return false;
 }
 
-//初始化
-void belong_init() {
-    belongs = link_init(0);
-}
+// 初始化
+void belong_init() { belongs = link_init(0); }
 
 
-//卸载，释放内存
-void belong_unin() {
-    link_free(belongs);
-}
+// 卸载，释放内存
+void belong_unin() { link_free(belongs); }
 
-//录入新的物品
-bool belong_add(const belong data) {
-    return link_insert_with_sort(belongs,data);
-}
+// 录入新的物品
+bool belong_add(const belong data) { return link_insert_with_sort(belongs, data); }
 
-//按照一定格式打印物品，顺序为%s%s%d=>name desc time
+// 按照一定格式打印物品，顺序为%s%s%d=>name desc time
 void belong_print(belong_query_callback callback) {
     link p = belongs->next;
     while (p != NULL) {
@@ -115,10 +112,39 @@ void belong_print(belong_query_callback callback) {
 
 void belong_save() {
     link p = belongs->next;
+    char *w_buffer = malloc(5148);
+    // 123456
+    unsigned offset = 0;
     while (p != NULL) {
+        unsigned char *buffer = 0;
+        unsigned len = 0;
+
+        tlv_encode_uint(&buffer, &len, p->data->id);
+        memmove(w_buffer + offset, buffer, len);
+        free(buffer);
+        offset += len - 1;
+
+        tlv_encode_uint(&buffer, &len, p->data->create_stamp);
+        memmove(w_buffer + offset, buffer, len);
+        free(buffer);
+        offset += len - 1;
+
+
+        tlv_encode_bytes(&buffer, &len, strlen(p->data->name), (unsigned char *) p->data->name);
+        memmove(w_buffer + offset, buffer, len);
+        free(buffer);
+        offset += len - 1;
+
+        tlv_encode_bytes(&buffer, &len, strlen(p->data->desc), (unsigned char *) p->data->desc);
+        memmove(w_buffer + offset, buffer, len);
+        offset += len - 1;
+        free(buffer);
 
         p = p->next;
     }
+    FILE *fp = fopen("./data", "wb");
+    fwrite(w_buffer, offset, 1, fp);
+    free(w_buffer);
 }
 
 // void a(const belong data) {
