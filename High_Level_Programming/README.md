@@ -71,3 +71,8 @@ cmake --build .
 
 
 
+## 参考的资料
+
+- Handbook of applied cryptography (Alfred Menezes, Paul van Oorschot etc.)
+- [CMAKE学习——编译多个文件 & 多个目录_多文件夹编译cmake-CSDN博客](https://blog.csdn.net/dyyzlzc/article/details/105189374)
+- [C语言下的清屏函数_#ifdef to gt checkdensityto fill = density to >0-CSDN博客](https://blog.csdn.net/lopper/article/details/5062960)
