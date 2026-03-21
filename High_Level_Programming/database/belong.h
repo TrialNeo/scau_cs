@@ -15,7 +15,9 @@ struct link {
     struct link *next;
 };
 typedef struct link *link;
+typedef void (*belong_query_callback)(belong); //分别为name,desc,time
 void belong_init();
 void belong_unin();
-bool belong_add();
+void belong_print();
+bool belong_add(const belong data);
 #endif // PBM_BELONG_H

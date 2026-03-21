@@ -5,8 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "belong.h"
-link belongs;
+#include <string.h>
 
+
+link belongs;
+unsigned size = 0;
 
 
 link link_init(unsigned num) {
@@ -45,9 +48,9 @@ void link_free(link L) {
 
 
 // 升序排序的插入,前提是本来的顺序就是升序的，其实和link_insert_with_id优点矛盾
-bool link_insert_with_sort(link L, const belong *data) {
+bool link_insert_with_sort(link L, const belong data) {
     link p = L;
-    while (p->next != NULL && data->create_stamp > p->next->data->create_stamp) {
+    while (p->next != NULL && data.create_stamp > p->next->data->create_stamp) {
         p = p->next;
     }
     link node = malloc(sizeof(struct link));
@@ -55,7 +58,10 @@ bool link_insert_with_sort(link L, const belong *data) {
         return false;
     }
     node->next = p->next;
-    node->data = (belong*)data;
+    node->data = malloc(sizeof(belong));
+    strcpy(node->data->name,data.name);
+    strcpy(node->data->desc,data.desc);
+    node->data->create_stamp = data.create_stamp;
     p->next = node;
     return true;
 }
@@ -82,9 +88,6 @@ bool link_del(link L, int index) {
     return false;
 }
 
-
-
-
 //初始化
 void belong_init() {
     belongs = link_init(0);
@@ -97,17 +100,31 @@ void belong_unin() {
 }
 
 //录入新的物品
-bool belong_add(const belong *data) {
+bool belong_add(const belong data) {
     return link_insert_with_sort(belongs,data);
 }
 
-
-
-//查询所有个人物品
-belong*[] belong_query() {
+//按照一定格式打印物品，顺序为%s%s%d=>name desc time
+void belong_print(belong_query_callback callback) {
     link p = belongs->next;
     while (p != NULL) {
+        callback(*(p->data));
         p = p->next;
     }
-    return 0;
 }
+
+// void a(const belong data) {
+//     printf("%s %s %ld\n",data.name,data.desc,data.create_stamp);
+// }
+//
+// int main(int argc, char *argv[]) {
+//     belong_init();
+//     belong data ;
+//     strcpy(data.name,"asihdsa");
+//     strcpy(data.desc,"uihshdsai");
+//     data.create_stamp = time(NULL);
+//     belong_add(data);
+//     belong_print(a);
+//
+//     belong_unin();
+// }
