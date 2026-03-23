@@ -36,13 +36,13 @@ void system_user_init() {
 
 //系统初始化，用于读取配置，数据相关
 void system_init(){
-    system_user_init();
-    belong_init();
+    system_user_init(); //加载用户配置
+    belong_init(); //加载个人物品的配置
 }
 
 
 void system_exit() {
     // 持久化存储
-
+    belong_save();
 
 }

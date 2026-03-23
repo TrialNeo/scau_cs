@@ -6,13 +6,13 @@
 #include "stdlib.h"
 #include "string.h"
 
-enum TLV_TYPE { TLV_TYPE_BYTES, TLV_TYPE_UINT32 };
+#include "stdio.h"
 
+enum TLV_TYPE { TLV_TYPE_BYTES, TLV_TYPE_UINT };
 
-#include <stdio.h>
 
 // 将belong数据流序列化为tlv数据,记得释放buffer
-void tlv_encode_bytes(unsigned char **buffer, unsigned *buffer_len, unsigned length, unsigned char *value) {
+void tlv_encode_bytes(bytes *buffer, unsigned *buffer_len, unsigned length, bytes value) {
     if (0 < length && length <= 0b11111111) {
         *buffer_len = 2 + length;
         *buffer = malloc(*buffer_len);
@@ -30,10 +30,26 @@ void tlv_encode_bytes(unsigned char **buffer, unsigned *buffer_len, unsigned len
     }
 }
 
+// 解成bytes，记得释放buffer
+void tlv_decode_bytes(const bytes tlv_stream, bytes *buffer, unsigned *len) {
+    unsigned char bit_len = tlv_stream[0] >> 4;
+    switch (bit_len) {
+        case 1:
+            *len = tlv_stream[1];
+            break;
+        case 2:
+            *len = (tlv_stream[1] << 8) + tlv_stream[2];
+            break;
+        default:
+            break;
+    }
+    *buffer = malloc(*len);
+    memmove(*buffer, tlv_stream + 1 + bit_len, *len);
+}
 
-//记得释放buffer
-void tlv_encode_uint(unsigned char **buffer, unsigned *buffer_len, unsigned long value) {
-    unsigned char val_buffer[16] = {0};
+// 记得释放buffer
+void tlv_encode_uint(bytes *buffer, unsigned *buffer_len, unsigned long long value) {
+    unsigned char val_buffer[16] = {0}; // 考虑64位机器呢，其实想着以后还能拿出来用不只是这个作业。
     unsigned offset = 1;
     do {
         unsigned char bit = value;
@@ -41,42 +57,32 @@ void tlv_encode_uint(unsigned char **buffer, unsigned *buffer_len, unsigned long
     } while ((value >>= 8) != 0);
     // 我们把长度直接塞到高四位去。
     *buffer = malloc(offset);
-    (*buffer)[0] = ((offset - 1) << 4) | TLV_TYPE_UINT32;
+    (*buffer)[0] = ((offset - 1) << 4) | TLV_TYPE_UINT;
     *buffer_len = offset;
     offset--;
     memmove((*buffer) + 1, val_buffer + 16 - offset, offset);
 }
 
-//解成bytes，记得释放buffer
-void tlv_decode_bytes(char **buffer, const unsigned char *tlv_stream) {
-    char type = tlv_stream[0] & 0b00001111;
-    switch (type) {
-        case TLV_TYPE_BYTES:
-            unsigned char bit_len = tlv_stream[0] >> 4;
-            unsigned len = 0;
-            switch (bit_len) {
-                case 1:
-                    len = tlv_stream[1];
-                    break;
-                case 2:
-                    len = (tlv_stream[1] << 8) + tlv_stream[2];
-                    break;
-                default:
-                    break;
-            }
-            *buffer = malloc(len);
-            memmove(*buffer, tlv_stream + 1 + bit_len, len);
-            break;
-        default:
-            break;
+
+// 读unsigned
+unsigned long long tlv_decode_uint(const bytes tlv_stream, unsigned *len) {
+    unsigned char length = tlv_stream[0] >> 4;
+    unsigned long long result = 0;
+    for (unsigned i = 1; i <= length; i++) {
+        result = result << 8 | tlv_stream[i];
     }
+    *len = length;
+    return result;
 }
+
 
 // int main(int argc, char *argv[]) {
 //     unsigned char *buffer = 0;
 //     unsigned len = 0;
-//     tlv_encode_uint(&buffer, &len, 0b111111111); // 0b1 1111 1111
+//     tlv_encode_uint(&buffer, &len, 0b11111111111111111111111111111111111111111111111111111111); // 0b1 1111 1111
 //     for (int i = 0; i < len; i++) {
-//         printf("%d ", buffer[i]);
+//         printf("%02X ", buffer[i]);
 //     }
+//     printf("\n");
+//     printf("%llu\n", tlv_decode_uint(buffer));
 // }
