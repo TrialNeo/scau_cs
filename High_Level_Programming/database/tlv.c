@@ -45,6 +45,7 @@ void tlv_decode_bytes(const bytes tlv_stream, bytes *buffer, unsigned *len) {
     }
     *buffer = malloc(*len);
     memmove(*buffer, tlv_stream + 1 + bit_len, *len);
+    *len += bit_len + 1;
 }
 
 // 记得释放buffer
@@ -71,7 +72,7 @@ unsigned long long tlv_decode_uint(const bytes tlv_stream, unsigned *len) {
     for (unsigned i = 1; i <= length; i++) {
         result = result << 8 | tlv_stream[i];
     }
-    *len = length;
+    *len = length + 1;
     return result;
 }
 
@@ -79,10 +80,10 @@ unsigned long long tlv_decode_uint(const bytes tlv_stream, unsigned *len) {
 // int main(int argc, char *argv[]) {
 //     unsigned char *buffer = 0;
 //     unsigned len = 0;
-//     tlv_encode_uint(&buffer, &len, 0b11111111111111111111111111111111111111111111111111111111); // 0b1 1111 1111
+//     tlv_encode_uint(&buffer, &len, 1); // 0b1 1111 1111
 //     for (int i = 0; i < len; i++) {
 //         printf("%02X ", buffer[i]);
 //     }
 //     printf("\n");
-//     printf("%llu\n", tlv_decode_uint(buffer));
+//     printf("%llu\n", tlv_decode_uint(buffer,&len));
 // }

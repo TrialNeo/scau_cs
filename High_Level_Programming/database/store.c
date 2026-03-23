@@ -32,10 +32,10 @@ void data_load(bytes *buffer, unsigned *size) {
 void data_rewrite(const bytes buffer, unsigned size) {
     FILE *fp = fopen("./data", "wb");
 
-    for (unsigned i = 0;i<size;i++) {
-        printf("%02X ",buffer[i]);
-    }
-    putchar('\n');
+    // for (unsigned i = 0;i<size;i++) {
+    //     printf("%02X ",buffer[i]);
+    // }
+    // putchar('\n');
     fwrite(buffer, size, 1, fp);
     fclose(fp);
 }

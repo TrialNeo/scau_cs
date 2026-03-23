@@ -102,35 +102,39 @@ void belong_save() {
 
     tlv_encode_uint(&buffer, &len_written, m_size);
     memmove(w_buffer, buffer, len_written);
+    offset = len_written;
+
     free(buffer);
-    offset += len_written - 1;
+
 
     while (p != NULL) {
-
         tlv_encode_uint(&buffer, &len_written, p->data->id);
         memmove(w_buffer + offset, buffer, len_written);
         free(buffer);
-        offset += len_written - 1;
+        offset += len_written;
+
 
         tlv_encode_uint(&buffer, &len_written, p->data->create_stamp);
         memmove(w_buffer + offset, buffer, len_written);
         free(buffer);
-        offset += len_written - 1;
+        offset += len_written;
 
 
         tlv_encode_bytes(&buffer, &len_written, strlen(p->data->name), (unsigned char *) p->data->name);
         memmove(w_buffer + offset, buffer, len_written);
         free(buffer);
-        offset += len_written - 1;
+        offset += len_written;
+
 
         tlv_encode_bytes(&buffer, &len_written, strlen(p->data->desc), (unsigned char *) p->data->desc);
         memmove(w_buffer + offset, buffer, len_written);
-        offset += len_written - 1;
+        offset += len_written;
         free(buffer);
 
         p = p->next;
     }
-    data_rewrite(w_buffer, offset + 1);
+
+    data_rewrite(w_buffer, offset);
     free(w_buffer);
 }
 
@@ -144,21 +148,29 @@ void belong_init() {
     data_load(&buffer, &len);
 
     unsigned size = tlv_decode_uint(buffer, &len_read);
+    bytes buffer_read = 0;
+    offset += len_read;
+
+
     for (unsigned i = 0; i < size; i++) {
         belong data;
-        bytes buffer_read = 0;
-        data.id = tlv_decode_uint(buffer, &len_read);
+        data.id = tlv_decode_uint(buffer + offset, &len_read);
+        offset += len_read;
 
+        data.create_stamp = tlv_decode_uint(buffer + offset, &len_read);
+        offset += len_read;
 
-        data.create_stamp = tlv_decode_uint(buffer, &len_read);
-
-        tlv_decode_bytes(buffer, &buffer_read, &len_read);
-        memcpy(&data.name,buffer_read,len_read);
+        tlv_decode_bytes(buffer + offset, &buffer_read, &len_read);
+        memcpy(data.name, buffer_read, len_read);
         free(buffer_read);
 
-        tlv_decode_bytes(buffer, &buffer_read, &len_read);
-        memcpy(&data.desc,buffer_read,len_read);
+        offset += len_read;
+
+
+        tlv_decode_bytes(buffer + offset, &buffer_read, &len_read);
+        memcpy(&data.desc, buffer_read, len_read);
         free(buffer_read);
+        offset += len_read;
 
         belong_add(data);
     }
