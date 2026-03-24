@@ -11,6 +11,11 @@
 // 清屏
 void system_cls() { system("cls"); }
 
+//等待确认
+void system_pause() {
+    system("pause");
+}
+
 //检测登录，初始化密码相关
 void system_user_init() {
     system_cls();
