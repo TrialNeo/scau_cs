@@ -1,18 +1,23 @@
-// Created by Github@TrialNeo(shenpanpro@gmail.com) 
+// Created by Github@TrialNeo(shenpanpro@gmail.com)
 // Created Time 2026/3/20.
 
 #ifndef PBM_ADMIN
 #define PBM_ADMIN
+#include <string>
+
+// 职责
+enum ROLE { ROLE_ADMIN, ROLE_USER };
+
+typedef struct user user;
+const char crypto_key[16] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+using namespace std;
 #include <stdbool.h>
-#include "../utils/crypto.h"
-enum LOGIN_STATUS {
-    SUCCESS,
-    PASSWORD_INCORRECT,
-    ERROR,
-    PASSWORD_UNSET
-};
-typedef enum LOGIN_STATUS LOGIN_STATUS;
-LOGIN_STATUS password_login(const char *password);
-bool password_check_set();
-void password_set(const char *password);
-#endif //PBM_ADMIN
+bool user_is_nil();
+#ifdef __cplusplus
+}
+#endif
+#endif // PBM_ADMIN

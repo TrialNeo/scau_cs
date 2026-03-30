@@ -1,83 +1,105 @@
-// Created by Github@TrialNeo(shenpanpro@gmail.com) 
-// Created Time 2026/3/20.
+// Created by Github@TrialNeo(shenpanpro@gmail.com)
+// Created Time 2026/3/29 15:41.
 
 #include "users.h"
-
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../utils/crypto.h"
 
 
+struct user {
+    char username[255];
+    char password[255];
+    ROLE role;
+};
 
+bool user_regist(user admin, const char *new_username, const char *new_password, char *error, size_t error_size) {
+    if (admin.role != ROLE_ADMIN) {
+        snprintf(error, error_size, "权限不足");
+        return false;
+    }
+    char file_path[1024];
+    snprintf(file_path, sizeof(file_path), "/data/users/%s", new_username);
+    FILE *fp = fopen(file_path, "rb");
+    if (fp != NULL) {
+        fclose(fp);
+        snprintf(error, error_size, "该用户已存在，无法注册");
+        return false;
+    }
+    char *buffer = NULL;
+    unsigned buffer_len = 0;
+    if (!encrypt(crypto_key, new_password, strlen(new_password), &buffer, &buffer_len)) {
+        snprintf(error, error_size, "密码加密失败");
+        return false;
+    }
 
-const char crypto_key[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+    fp = fopen(file_path, "wb");
+    fwrite(buffer, 1, buffer_len, fp);
+    fclose(fp);
+    free(buffer);
+    return true;
+}
 
+bool user_login(user user, char *error, size_t error_size) {
+    char file_path[1024];
+    snprintf(file_path, sizeof(file_path), "/data/users/%s", user.username);
+    FILE *file = fopen(file_path, "rb");
+    if (file == NULL) {
+        snprintf(error, error_size, "该用户不存在");
+        return false;
+    }
 
-//用户登录 已经弃用
-// LOGIN_STATUS password_login(const char *password) {
-//     //传入的是明文，我们要对此进行简单的加密，可惜不能用ECDH+Des，RSA之类的，不然还能更安全
-//     char *buffer = 0;
-//     unsigned len = 0;
-//     if (!encrypt(crypto_key,password, strlen(password), &buffer, &len)) {
-//         //这里没有成功申请内存，不用释放
-//         return ERROR;
-//     }
-//     FILE * file =  fopen("./password","rb"); //这个反正不是很满意
-//     if (file==NULL) {
-//         return PASSWORD_UNSET;
-//     }
-//     fseek(file, 0, SEEK_END);
-//     unsigned len2 = ftell(file);
-//     rewind(file);
-//     char * tmp = malloc(len2 * sizeof(char));
-//     fread(tmp,len2,1,file);
-//     //对比，由于好像没有api，直接来做吧，，
-//     if (len != len2) {
-//        fclose(file);
-//         free(buffer);
-//         free(tmp);
-//         return PASSWORD_INCORRECT;
-//     }
-//     bool logined = true;
-//     for (int i = 0;i<len;i++) {
-//         if (buffer[i]!= tmp[i]) {
-//             logined = false;
-//             break;
-//         }
-//     }
-//
-//     free(buffer);
-//     free(tmp);
-//     fclose(file);
-//     if (logined) {
-//         return SUCCESS;
-//     }
-//     return PASSWORD_INCORRECT;
-// }
+    char *buffer = NULL;
+    unsigned len = 0;
+    if (!encrypt(crypto_key, user.password, strlen(user.password), &buffer, &len)) {
+        snprintf(error, error_size, "密码加密失败");
+        fclose(file);
+        return false;
+    }
 
+    fseek(file, 0, SEEK_END);
+    long len2 = ftell(file);
+    rewind(file);
+    if ((long) len != len2) {
+        free(buffer);
+        fclose(file);
+        snprintf(error, error_size, "密码错误");
+        return false;
+    }
+    char *tmp = malloc(len2);
+    fread(tmp, 1, len2, file);
+    bool login_status = true;
+    for (int i = 0; i < (int) len; i++) {
+        if (buffer[i] != tmp[i]) {
+            login_status = false;
+            break;
+        }
+    }
+    free(buffer);
+    free(tmp);
+    fclose(file);
+    if (login_status) {
+        return true;
+    }
+    snprintf(error, error_size, "密码错误");
+    return false;
+}
 
-// bool password_check_set() {
-//     FILE * file =  fopen("./password","rb"); //这个反正不是很满意
-//     if (file == NULL) {
-//         return false;
-//     }
-//     fseek(file, 0, SEEK_END);
-//     bool is_set = ftell(file) > 0;
-//     fclose(file);
-//     return is_set;
-// }
-
-
-//已经弃用
-// void password_set(const char *password) {
-//     FILE *file = fopen("./password", "wb");
-//     if (file != NULL) {
-//         char *buffer = 0;
-//         unsigned len = 0;
-//         if (encrypt(crypto_key,password, strlen(password), &buffer, &len)) {
-//             printf("%llu\n",fwrite(buffer, len, 1, file));
-//         }
-//         free(buffer);
-//         fclose(file);
-//     }
-// }
+bool user_is_nil() {
+    DIR *d = opendir("./data/users");
+    if (d == NULL) {
+        return true;
+    }
+    dirent *entry;
+    int found = 0;
+    while ((entry = readdir(d)) != NULL) {
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            found = 1;
+            break;
+        }
+    }
+    closedir(d);
+    return !found;
+}
