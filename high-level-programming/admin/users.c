@@ -6,35 +6,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "../utils/crypto.h"
+const char crypto_key[16] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+user global_user;
 
-
-struct user {
-    char username[255];
-    char password[255];
-    ROLE role;
-};
-
-bool user_regist(user admin, const char *new_username, const char *new_password, char *error, size_t error_size) {
-    if (admin.role != ROLE_ADMIN) {
-        snprintf(error, error_size, "权限不足");
+bool user_regist(user admin, const char *new_username, const char *new_password, char *error) {
+    if (admin->role != ROLE_ADMIN) {
+        strcpy(error, "权限不足");
         return false;
     }
     char file_path[1024];
-    snprintf(file_path, sizeof(file_path), "/data/users/%s", new_username);
+    snprintf(file_path, sizeof(file_path), "./data/users/%s", new_username);
     FILE *fp = fopen(file_path, "rb");
     if (fp != NULL) {
         fclose(fp);
-        snprintf(error, error_size, "该用户已存在，无法注册");
+        strcpy(error, "该用户已存在，无法注册");
         return false;
     }
+    fclose(fp);
     char *buffer = NULL;
     unsigned buffer_len = 0;
     if (!encrypt(crypto_key, new_password, strlen(new_password), &buffer, &buffer_len)) {
-        snprintf(error, error_size, "密码加密失败");
+        strcpy(error, "密码加密失败");
         return false;
     }
-
     fp = fopen(file_path, "wb");
     fwrite(buffer, 1, buffer_len, fp);
     fclose(fp);
@@ -42,19 +38,20 @@ bool user_regist(user admin, const char *new_username, const char *new_password,
     return true;
 }
 
-bool user_login(user user, char *error, size_t error_size) {
+bool user_login(user user, char *error) {
     char file_path[1024];
-    snprintf(file_path, sizeof(file_path), "/data/users/%s", user.username);
+    snprintf(file_path, sizeof(file_path), "./data/users/%s", user->username);
+    // system_tip(file_path);
     FILE *file = fopen(file_path, "rb");
     if (file == NULL) {
-        snprintf(error, error_size, "该用户不存在");
+        strcpy(error, "该用户不存在");
         return false;
     }
 
     char *buffer = NULL;
     unsigned len = 0;
-    if (!encrypt(crypto_key, user.password, strlen(user.password), &buffer, &len)) {
-        snprintf(error, error_size, "密码加密失败");
+    if (!encrypt(crypto_key, user->password, strlen(user->password), &buffer, &len)) {
+        strcpy(error, "密码加密失败");
         fclose(file);
         return false;
     }
@@ -65,10 +62,10 @@ bool user_login(user user, char *error, size_t error_size) {
     if ((long) len != len2) {
         free(buffer);
         fclose(file);
-        snprintf(error, error_size, "密码错误");
+        strcpy(error, "密码错误");
         return false;
     }
-    char *tmp = malloc(len2);
+    char *tmp = (char *) malloc(len2);
     fread(tmp, 1, len2, file);
     bool login_status = true;
     for (int i = 0; i < (int) len; i++) {
@@ -83,7 +80,7 @@ bool user_login(user user, char *error, size_t error_size) {
     if (login_status) {
         return true;
     }
-    snprintf(error, error_size, "密码错误");
+    strcpy(error, "密码错误");
     return false;
 }
 
@@ -92,7 +89,7 @@ bool user_is_nil() {
     if (d == NULL) {
         return true;
     }
-    dirent *entry;
+    struct dirent *entry;
     int found = 0;
     while ((entry = readdir(d)) != NULL) {
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {

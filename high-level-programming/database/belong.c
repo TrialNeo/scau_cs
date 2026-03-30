@@ -139,6 +139,7 @@ void belong_save() {
 
 // 初始化
 void belong_init() {
+
     belongs = link_init(0);
     bytes buffer = 0;
     unsigned block_size = 0, len_read = 0, buffer_len = 0, offset = 0;

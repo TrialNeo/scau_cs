@@ -3,12 +3,13 @@
 
 
 #include <ctype.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include "../admin/users.h"
 #include "../database/belong.h"
+
 
 // 清屏
 void system_cls() { system("cls"); }
@@ -59,31 +60,52 @@ unsigned system_get_op_id(unsigned min, unsigned max) {
 // 检测登录，初始化密码相关
 void system_user_init() {
     system_cls();
-    if (!password_check_set()) {
-        printf("因为您是第一次使用，请先设置密码：");
-        char password[255] = {0};
+    system_fun_start();
+    if (user_is_nil()) {
+        char username[255], password[255];
+        system_split();
+        system_tip("由于您是初次使用本程序，请先创建一个管理员账号");
+        system_ask("请输入账号");
+        scanf(" %s", username);
+        system_ask("请输入密码");
         scanf(" %s", password);
-        puts(password);
-        password_set(password);
-    } else {
-        printf("请输入密码登录：");
-        char password[255] = {0};
-        scanf(" %s", password);
-        while (password_login(password) != SUCCESS) {
-            printf("密码错误，请重新输入:");
-            scanf(" %s", password);
+        user non_admin;
+        non_admin->role = ROLE_ADMIN;
+        char error[255] = {0};
+        if (!user_regist(non_admin, username, password, error)) {
+            system_tip(error);
+        } else {
+            system_tip("创建成功");
         }
-        printf("登录成功\n");
+        system_pause();
+    } else {
+        // 这里做一个登录
+        global_user = malloc(sizeof(user));
+        char error[255] = {0};
+        system_tip("请先进行登录");
+        system_split();
+        system_ask("请输入账号");
+        scanf(" %s", global_user->username);
+        system_ask("请输入密码");
+        scanf(" %s", global_user->password);
+        if (!user_login(global_user, error)) {
+            system_tip(error);
+            system_pause();
+            exit(0);
+        } else {
+            system_tip("登录成功");
+            system_pause();
+        }
     }
 }
 
 
 // 系统初始化，用于读取配置，数据相关
 void system_init() {
-    //注册特定的文件目录
+    // 注册特定的文件目录
     mkdir("./data");
-    mkdir("./data/user");
-
+    mkdir("./data/users");
+    mkdir("./data/belongs");
     system_user_init(); // 加载用户配置
     belong_init(); // 加载个人物品的配置
 }

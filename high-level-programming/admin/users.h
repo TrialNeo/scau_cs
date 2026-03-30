@@ -3,21 +3,19 @@
 
 #ifndef PBM_ADMIN
 #define PBM_ADMIN
-#include <string>
+#include <stdbool.h>
 
 // 职责
-enum ROLE { ROLE_ADMIN, ROLE_USER };
+typedef enum ROLE { ROLE_ADMIN, ROLE_USER } ROLE;
+struct _user {
+    char username[255];
+    char password[255];
+    ROLE role;
+};
+typedef struct _user *user;
+extern user global_user;
 
-typedef struct user user;
-const char crypto_key[16] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-using namespace std;
-#include <stdbool.h>
 bool user_is_nil();
-#ifdef __cplusplus
-}
-#endif
+bool user_regist(user admin, const char *new_username, const char *new_password, char *error);
+bool user_login(user user, char *error);
 #endif // PBM_ADMIN
