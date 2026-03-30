@@ -4,7 +4,14 @@
 #ifndef crypto
 #define crypto
 #include <stdbool.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 bool decrypt(const char key_buffer[16],const char *paint_text_buffer, unsigned text_len, char **buffer,unsigned *len);
 bool encrypt(const char key_buffer[16],const char *paint_text_buffer, unsigned text_len,char **buffer,unsigned *len);
 void print_buffer(const unsigned char *buffer,const unsigned len);
+#ifdef __cplusplus
+}
+#endif
+
 #endif

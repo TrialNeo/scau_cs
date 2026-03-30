@@ -5,13 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../admin/users.h"
 #include "../system/system.h"
 #include "../utils/crypto.h"
 
-
 const char file_crypto_key[16] = {16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
 void data_load(bytes *buffer, unsigned *size) {
-    FILE *file = fopen("./data", "rb");
+    char file_path[1024];
+    snprintf(file_path, sizeof(file_path), "./data/belongs/%s", global_user->username);
+    FILE *file = fopen(file_path, "rb");
     if (file != NULL) {
         fseek(file, 0, SEEK_END);
         unsigned len = ftell(file);
@@ -29,7 +31,9 @@ void data_load(bytes *buffer, unsigned *size) {
 
 // 记得调用之后释放buffer的内存
 void data_rewrite(const bytes buffer, unsigned size) {
-    FILE *fp = fopen("./data", "wb");
+    char file_path[1024];
+    snprintf(file_path, sizeof(file_path), "./data/belongs/%s", global_user->username);
+    FILE *fp = fopen(file_path, "wb+");
     // print_buffer(buffer, size);
     char *_buffer = 0;
     unsigned len = 0;
